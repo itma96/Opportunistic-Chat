@@ -1,6 +1,7 @@
 package com.example.opportunisticchat.view;
 
 import android.app.Fragment;
+import android.app.FragmentManager;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -19,7 +20,7 @@ import com.example.opportunisticchat.R;
 import com.example.opportunisticchat.general.Constants;
 import com.example.opportunisticchat.model.Message;
 import com.example.opportunisticchat.model.Channel;
-import com.example.opportunisticchat.proxy.ServiceProxyOperations;
+import com.example.opportunisticchat.proxy.ChannelProxyOperations;
 
 public class ChatConversationFragment extends Fragment {
 
@@ -32,6 +33,8 @@ public class ChatConversationFragment extends Fragment {
     private int peerPosition;
     private int peerType;
 
+    private static final String TAG = "ChatConversationFragment";
+
     private SendMessageButtonClickListener sendMessageButtonClickListener = new SendMessageButtonClickListener();
     private class SendMessageButtonClickListener implements Button.OnClickListener {
 
@@ -41,13 +44,21 @@ public class ChatConversationFragment extends Fragment {
             if (message.isEmpty()) {
                 Toast.makeText(getActivity(), "You should fill a message!", Toast.LENGTH_SHORT).show();
             } else {
-                ChatActivity chatServiceActivity = (ChatActivity)getActivity();
-                ServiceProxyOperations serviceProxyOperations = chatServiceActivity.getServiceProxyOperations();
-                serviceProxyOperations.onSendMessage(peerChannel.getServiceHostSocialId(), message);
+                ChatActivity chatActivity = (ChatActivity)getActivity();
+                ChannelProxyOperations channelProxyOperations = chatActivity.getChannelProxy();
+                channelProxyOperations.onSendMessage(peerChannel.getServiceHostSocialId(), message);
+                peerChannel.getConversationHistory().add(new Message(message, Constants.MESSAGE_TYPE_SENT));
+
+                FragmentManager fragmentManager = chatActivity.getFragmentManager();
+                Fragment fragment = fragmentManager.findFragmentByTag(Constants.FRAGMENT_TAG);
+                if (fragment instanceof ChatConversationFragment && fragment.isVisible()) {
+                    ChatConversationFragment chatConversationFragment = (ChatConversationFragment) fragment;
+                    chatConversationFragment.appendMessage(new Message(message, Constants.MESSAGE_TYPE_SENT));
+                }
+
                 messageEditText.setText("");
             }
         }
-
     }
 
     public ChatConversationFragment() {
@@ -98,18 +109,19 @@ public class ChatConversationFragment extends Fragment {
         this.peerType = arguments.getInt(Constants.CLIENT_TYPE, -1);
 
         ChatActivity chatServiceActivity = (ChatActivity)getActivity();
-        ServiceProxyOperations serviceProxyOperations = chatServiceActivity.getServiceProxyOperations();
+        ChannelProxyOperations channelProxyOperations = chatServiceActivity.getChannelProxy();
 
         switch (peerType) {
             case Constants.CONVERSATION_TO_CHANNEL:
-                peerChannel = serviceProxyOperations.getCommunicationToPeerChannels().get(peerPosition);
+                peerChannel = channelProxyOperations.getCommunicationToPeerChannels().get(peerPosition);
                 break;
             case Constants.CONVERSATION_FROM_CHANNEL:
-                peerChannel = serviceProxyOperations.getCommunicationFromPeerChannels().get(peerPosition);
+                peerChannel = channelProxyOperations.getCommunicationFromPeerChannels().get(peerPosition);
                 break;
         }
 
         chatCommunicationHistoryLinearLayout = (LinearLayout)getActivity().findViewById(R.id.chat_communication_history_linear_layout);
+        chatCommunicationHistoryLinearLayout.removeAllViews();
         messageEditText = (EditText)getActivity().findViewById(R.id.message_edit_text);
 
         sendMessageButton = (Button)getActivity().findViewById(R.id.send_message_button);

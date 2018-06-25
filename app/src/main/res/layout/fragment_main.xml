@@ -10,22 +10,22 @@
         android:layout_gravity="end">
 
         <Button
-            android:id="@+id/start_service_button"
+            android:id="@+id/register_channel_button"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:layout_weight="0.5"
             android:background="@color/colorAccent"
-            android:text="@string/start_service" />
+            android:text="@string/register_channel" />
 
         <Button
-            android:id="@+id/stop_service_button"
+            android:id="@+id/unregister_channel_button"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:layout_weight="0.5"
             android:background="@color/colorAccent"
-            android:text="@string/stop_service" />
+            android:text="@string/unregister_channel" />
 
     </LinearLayout>
 
@@ -49,7 +49,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center"
-                android:text="@string/discovered_services"
+                android:text="@string/discovered_channels"
                 android:textColor="@color/colorDarkBlue" />
 
             <ListView

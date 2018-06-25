@@ -18,40 +18,43 @@ import com.example.opportunisticchat.model.Message;
 import com.example.opportunisticchat.view.ChatActivity;
 import com.example.opportunisticchat.view.ChatConversationFragment;
 
-public class ServiceProxyOperations extends BroadcastReceiver {
+public class ChannelProxyOperations extends BroadcastReceiver {
 
-    private static final String SERVICE_REQUEST = "com.example.opportunisticchat.service.request";
-    private static final String SERVICE_RESPONSE = "com.example.opportunisticchat.service.response";
-    
     private Context context = null;
     private ChatActivity chatActivity = null;
 
-    private String serviceName = null;
+    private String channelName = null;
 
     private List<Channel> communicationToPeerChannels = null;
     private List<Channel> communicationFromPeerChannels = null;
+    
+    private static final String TAG = "ChannelProxyOperations";
 
-    public ServiceProxyOperations(final Context context, String serviceName) {
+    public ChannelProxyOperations(final Context context, String channelName) {
 
         this.context = context;
-        this.serviceName = serviceName;
+        this.channelName = channelName;
         this.chatActivity = (ChatActivity) context;
 
         this.communicationToPeerChannels = new ArrayList<>();
         this.communicationFromPeerChannels = new ArrayList<>();
 
-        IntentFilter filter = new IntentFilter(SERVICE_RESPONSE);
+        IntentFilter filter = new IntentFilter(Constants.CHANNEL_RESPONSE);
         context.registerReceiver(this, filter);
     }
 
     public void registerNetworkChannel(String channelName) throws Exception {
-        Log.i(Constants.TAG, "Registering network channel...");
-        // TODO send broadcast intent to myChannel service to register channelName
+        Log.i(TAG, "Registering network channel...");
+        Intent intent = new Intent(Constants.CHANNEL_REQUEST);
+        intent.putExtra(Constants.REQUEST_TYPE, Constants.REGISTER_CHANNEL);
+        context.sendBroadcast(intent);
     }
 
-    public void unregisterNetworkChannel(String channelName) {
-        Log.i(Constants.TAG, "Unregistering network channel...");
-        // TODO send broadcast intent to myChannel to unregister channelName
+    public void unregisterNetworkChannel() {
+        Log.i(TAG, "Unregistering network channel...");
+        Intent intent = new Intent(Constants.CHANNEL_REQUEST);
+        intent.putExtra(Constants.REQUEST_TYPE, Constants.UNREGISTER_CHANNEL);
+        context.sendBroadcast(intent);
     }
 
     public Context getContext() {
@@ -80,13 +83,18 @@ public class ServiceProxyOperations extends BroadcastReceiver {
     }
 
     public void onSendMessage(String userId, String content) {
-        //TODO make connection object and send message
+        Log.i(TAG, "Sending message " + content + " " + "to peer " + userId);
+        Intent intent = new Intent(Constants.CHANNEL_REQUEST);
+        intent.putExtra(Constants.REQUEST_TYPE, Constants.SEND_MESSAGE);
+        intent.putExtra(Constants.PEER, userId);
+        intent.putExtra(Constants.MESSAGE, content);
+        context.sendBroadcast(intent);
     }
 
     @Override
     public void onReceive(final Context context, Intent intent) {
-        if (SERVICE_RESPONSE.equals(intent.getAction())) {
-            String what = intent.getStringExtra("type");
+        if (Constants.CHANNEL_RESPONSE.equals(intent.getAction())) {
+            String response = intent.getStringExtra(Constants.RESPONSE_TYPE);
             Handler handler = chatActivity.getHandler();
 
             final String peerDeviceId;
@@ -94,8 +102,9 @@ public class ServiceProxyOperations extends BroadcastReceiver {
             final String peerWellKnownName;
             final String peerMessage;
 
-            switch (what) {
+            switch (response) {
                 case Constants.CHANNEL_REGISTERED:
+                    Log.i(TAG, "Channel Registered");
                     handler.post(new Runnable() {
                         @Override
                         public void run() {
@@ -103,9 +112,10 @@ public class ServiceProxyOperations extends BroadcastReceiver {
                                     Toast.LENGTH_LONG).show();
                         }
                     });
-                    chatActivity.setServiceRegistrationStatus(true);
+                    chatActivity.setChannelRegistrationStatus(true);
                     break;
                 case Constants.CHANNEL_UNREGISTERED:
+                    Log.i(TAG, "Channel Unregistered");
                     handler.post(new Runnable() {
                         @Override
                         public void run() {
@@ -124,13 +134,13 @@ public class ServiceProxyOperations extends BroadcastReceiver {
                     conversations.clear();
                     chatActivity.setConversations(conversations);
 
-                    chatActivity.setServiceRegistrationStatus(false);
+                    chatActivity.setChannelRegistrationStatus(false);
                     break;
-                case Constants.CHANNEL_DISCOVERED:
+                case Constants.PEER_CONNECTED:
                     peerDeviceId = intent.getStringExtra("deviceId");
                     peerSocialId = intent.getStringExtra("socialId");
-                    peerWellKnownName = Constants.CHANNEL_NAME + ".d" + peerDeviceId + ".u" + peerSocialId;
-                    Log.i(Constants.TAG, "Channel discovered: " + peerWellKnownName);
+                    peerWellKnownName = channelName + ".d" + peerDeviceId + ".u" + peerSocialId;
+                    Log.i(TAG, "Peer Connected: " + peerWellKnownName);
                     handler.post(new Runnable() {
                         @Override
                         public void run() {
@@ -146,10 +156,11 @@ public class ServiceProxyOperations extends BroadcastReceiver {
                         }
                     });
                     break;
-                case Constants.CHANNEL_REMOVED:
+                case Constants.PEER_DISCONNECTED:
                     peerDeviceId = intent.getStringExtra("deviceId");
                     peerSocialId = intent.getStringExtra("socialId");
-                    peerWellKnownName = serviceName + ".d" + peerDeviceId + ".u" + peerSocialId;
+                    peerWellKnownName = channelName + ".d" + peerDeviceId + ".u" + peerSocialId;
+                    Log.i(TAG, "Peer Disconnected: " + peerWellKnownName);
                     handler.post(new Runnable() {
                         @Override
                         public void run() {
@@ -168,16 +179,17 @@ public class ServiceProxyOperations extends BroadcastReceiver {
                         }
                     });
                     break;
-                case Constants.CHANNEL_MESSAGE:
-                    peerDeviceId = intent.getStringExtra("deviceId");
+                case Constants.PEER_MESSAGE:
+                    peerDeviceId = intent.getStringExtra("socialId");
                     peerSocialId = intent.getStringExtra("socialId");
-                    peerWellKnownName = serviceName + ".d" + peerDeviceId + ".u" + peerSocialId;
+                    peerWellKnownName = channelName + ".d" + peerDeviceId + ".u" + peerSocialId;
+                    Log.i(TAG, "Peer Message: " + peerWellKnownName);
                     peerMessage = intent.getStringExtra("message");
-                    for (Channel communicationFromChannel : communicationFromPeerChannels) {
-                        if (communicationFromChannel.getWellKnownName().equals(peerWellKnownName)) {
+                    for (Channel communicationFromPeerChannel : communicationFromPeerChannels) {
+                        if (communicationFromPeerChannel.getWellKnownName().equals(peerWellKnownName)) {
                             Message message = new Message(peerMessage, Constants.MESSAGE_TYPE_RECEIVED);
-                            communicationFromChannel.getConversationHistory().add(message);
-                            if (communicationFromChannel.getContext() != null) {
+                            communicationFromPeerChannel.getConversationHistory().add(message);
+                            if (communicationFromPeerChannel.getContext() != null) {
                                 ChatActivity chatActivity = (ChatActivity)context;
                                 FragmentManager fragmentManager = chatActivity.getFragmentManager();
                                 Fragment fragment = fragmentManager.findFragmentByTag(Constants.FRAGMENT_TAG);
@@ -196,7 +208,7 @@ public class ServiceProxyOperations extends BroadcastReceiver {
                     setCommunicationFromPeerChannels(communicationFromPeerChannels);
                     break;
                 default:
-                    return;
+                    break;
             }
         }
     }

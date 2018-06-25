@@ -1,16 +1,13 @@
 <resources>
     <string name="app_name">Opportunistic Chat</string>
-    <string name="service_port">Service Port</string>
-    <string name="start_service">Start Service</string>
-    <string name="stop_service">Stop Service</string>
-    <string name="start_service_discovery">Start Service Discovery</string>
-    <string name="stop_service_discovery">Stop Service Discovery</string>
+    <string name="register_channel">Register Channel</string>
+    <string name="unregister_channel">Unregister Channel</string>
     <string name="connect">Connect</string>
     <string name="view">View</string>
     <string name="message">Message</string>
     <string name="send_message">Send Message</string>
     <string name="chat_communication">Chat Communication</string>
-    <string name="discovered_services">Discovered Services</string>
+    <string name="discovered_channels">Discovered Channels</string>
     <string name="conversations">Incoming Conversations</string>
 
     <!-- TODO: Remove or change this placeholder text -->

@@ -16,29 +16,29 @@ import java.util.List;
 import com.example.opportunisticchat.R;
 import com.example.opportunisticchat.general.Constants;
 import com.example.opportunisticchat.model.Channel;
-import com.example.opportunisticchat.proxy.ServiceProxyOperations;
+import com.example.opportunisticchat.proxy.ChannelProxyOperations;
 import com.example.opportunisticchat.view.ChatActivity;
 import com.example.opportunisticchat.view.ChatConversationFragment;
 
-public class NetworkServiceAdapter extends BaseAdapter {
+public class ChannelAdapter extends BaseAdapter {
 
     private Context context = null;
     private LayoutInflater layoutInflater = null;
 
     private List<Channel> data = null;
-    private ServiceProxyOperations serviceProxy = null;
+    private ChannelProxyOperations channelProxy = null;
 
-    private static class NetworkServiceViewHolder {
+    private static class ChannelViewHolder {
         private TextView networkServiceNameTextView;
-        private Button networkServiceConnectButton;
+        private Button channelConnectButton;
     }
 
-    private class NetworkServiceConnectButtonClickListener implements Button.OnClickListener {
+    private class ChannelConnectButtonClickListener implements Button.OnClickListener {
 
         private int channelPosition = -1;
         private int channelType = -1;
 
-        public NetworkServiceConnectButtonClickListener(int channelPosition, int channelType) {
+        public ChannelConnectButtonClickListener(int channelPosition, int channelType) {
             this.channelPosition = channelPosition;
             this.channelType = channelType;
         }
@@ -48,10 +48,10 @@ public class NetworkServiceAdapter extends BaseAdapter {
             final Channel chat;
             switch(channelType) {
                 case Constants.CONVERSATION_TO_CHANNEL:
-                    chat = serviceProxy.getCommunicationToPeerChannels().get(channelPosition);
+                    chat = channelProxy.getCommunicationToPeerChannels().get(channelPosition);
                     break;
                 case Constants.CONVERSATION_FROM_CHANNEL:
-                    chat = serviceProxy.getCommunicationFromPeerChannels().get(channelPosition);
+                    chat = channelProxy.getCommunicationFromPeerChannels().get(channelPosition);
                     break;
                 default:
                     chat = null;
@@ -72,10 +72,10 @@ public class NetworkServiceAdapter extends BaseAdapter {
 
     }
 
-    public NetworkServiceAdapter(Context context, List<Channel> data, ServiceProxyOperations serviceProxy) {
+    public ChannelAdapter(Context context, List<Channel> data, ChannelProxyOperations channelProxy) {
         this.context = context;
         this.data = data;
-        this.serviceProxy = serviceProxy;
+        this.channelProxy = channelProxy;
 
         layoutInflater = (LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
     }
@@ -107,34 +107,34 @@ public class NetworkServiceAdapter extends BaseAdapter {
     public View getView(int position, View convertView, ViewGroup parent) {
         View view;
 
-        NetworkServiceViewHolder networkServiceViewHolder;
+        ChannelViewHolder channelViewHolder;
 
         Channel channel = (Channel)getItem(position);
 
         if (convertView == null) {
-            view = layoutInflater.inflate(R.layout.network_service, parent, false);
-            networkServiceViewHolder = new NetworkServiceViewHolder();
-            networkServiceViewHolder.networkServiceNameTextView = (TextView)view.findViewById(R.id.networkservice_name_text_view);
-            networkServiceViewHolder.networkServiceConnectButton = (Button)view.findViewById(R.id.network_service_connect_button);
-            view.setTag(networkServiceViewHolder);
+            view = layoutInflater.inflate(R.layout.channel, parent, false);
+            channelViewHolder = new ChannelViewHolder();
+            channelViewHolder.networkServiceNameTextView = (TextView)view.findViewById(R.id.channel_name_text_view);
+            channelViewHolder.channelConnectButton = (Button)view.findViewById(R.id.channel_connect_button);
+            view.setTag(channelViewHolder);
         } else {
             view = convertView;
         }
 
-        networkServiceViewHolder = (NetworkServiceViewHolder)view.getTag();
-        networkServiceViewHolder.networkServiceNameTextView.setText(channel.getWellKnownName());
+        channelViewHolder = (ChannelViewHolder)view.getTag();
+        channelViewHolder.networkServiceNameTextView.setText(channel.getWellKnownName());
         switch (channel.getChannelType()) {
             case Constants.CONVERSATION_TO_CHANNEL:
-                networkServiceViewHolder.networkServiceConnectButton.setText(
+                channelViewHolder.channelConnectButton.setText(
                         context.getResources().getString(R.string.connect));
                 break;
             case Constants.CONVERSATION_FROM_CHANNEL:
-                networkServiceViewHolder.networkServiceConnectButton.setText(
+                channelViewHolder.channelConnectButton.setText(
                         context.getResources().getString(R.string.view));
                 break;
         }
-        networkServiceViewHolder.networkServiceConnectButton.setOnClickListener(
-                new NetworkServiceConnectButtonClickListener(
+        channelViewHolder.channelConnectButton.setOnClickListener(
+                new ChannelConnectButtonClickListener(
                         position,
                         channel.getChannelType()
                 )

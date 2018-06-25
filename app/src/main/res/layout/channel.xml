@@ -11,7 +11,7 @@
         android:layout_gravity="start|center_vertical">
 
         <TextView
-            android:id="@+id/networkservice_name_text_view"
+            android:id="@+id/channel_name_text_view"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="start|center_vertical"/>
@@ -25,7 +25,7 @@
         android:layout_gravity="end|center_vertical">
 
         <Button
-            android:id="@+id/network_service_connect_button"
+            android:id="@+id/channel_connect_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="end|center_vertical"/>
